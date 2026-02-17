@@ -16,8 +16,7 @@ app.get("/", (req, res) => {
 
 const GEMINI_MODEL = "gemini-1.5-flash";
 
-
-// OCR endpoint
+// ---------- OCR ENDPOINT ----------
 app.post("/api/gemini", async (req, res) => {
   try {
     const { prompt, systemInstruction, imageBase64 } = req.body;
@@ -40,18 +39,30 @@ app.post("/api/gemini", async (req, res) => {
       },
     };
 
+    // ---- TIMEOUT CONTROLLER ----
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20000); // 20 sec
+
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
+        signal: controller.signal,
       }
     );
 
-    const data = await response.json();
+    clearTimeout(timeout);
 
-    // DEBUG LOG
+    // ---- HTTP ERROR CHECK ----
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error("Gemini HTTP Error:", errText);
+      return res.status(500).json({ error: "Gemini HTTP Failed" });
+    }
+
+    const data = await response.json();
     console.log("Gemini OCR Response:", JSON.stringify(data));
 
     if (!data || data.error) {
@@ -71,7 +82,7 @@ app.post("/api/gemini", async (req, res) => {
   }
 });
 
-// Document Detection Endpoint
+// ---------- DOCUMENT DETECTION ----------
 app.post("/api/detect-document", async (req, res) => {
   try {
     const { imageBase64 } = req.body;
@@ -97,17 +108,28 @@ app.post("/api/detect-document", async (req, res) => {
       ],
     };
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20000);
+
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
+        signal: controller.signal,
       }
     );
 
-    const data = await response.json();
+    clearTimeout(timeout);
 
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error("Gemini Detect HTTP Error:", errText);
+      return res.status(500).json({ error: "Detection HTTP Failed" });
+    }
+
+    const data = await response.json();
     console.log("Gemini Detection Response:", JSON.stringify(data));
 
     const detectedType =
