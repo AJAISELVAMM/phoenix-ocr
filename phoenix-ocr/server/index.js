@@ -14,7 +14,8 @@ app.get("/", (req, res) => {
   res.send("Phoenix OCR Backend Running");
 });
 
-const GEMINI_MODEL = "gemini-2.5-flash-preview-09-2025";
+const GEMINI_MODEL = "gemini-1.5-flash";
+
 
 // OCR endpoint
 app.post("/api/gemini", async (req, res) => {
