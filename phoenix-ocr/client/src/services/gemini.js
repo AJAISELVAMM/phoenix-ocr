@@ -1,6 +1,6 @@
 const API_BASE =
   process.env.NODE_ENV === "production"
-    ? "https://your-backend-url.onrender.com"
+    ? "https://phoenix-ocr.onrender.com"
     : "";
 
 export const callGemini = async (prompt, systemInstruction = "", imageBase64 = null) => {
